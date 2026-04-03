@@ -32,11 +32,11 @@ export default function LoginPage() {
 
     try {
       await authApi.login(email, password);
-      toast.success("¡Bienvenido!");
+      toast.success("Welcome back!");
       navigate("/dashboard");
     } catch (err: unknown) {
       const error = err as { response?: { data?: { detail?: string } } };
-      toast.error(error.response?.data?.detail || "Error al iniciar sesión");
+      toast.error(error.response?.data?.detail || "Login failed. Please check your credentials.");
     } finally {
       setLoading(false);
     }
@@ -47,7 +47,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md space-y-8">
         {/* Logo / Header */}
         <div className="text-center space-y-2">
-          <div className="mx-auto w-16 h-16 rounded-2xl bg-primary flex items-center justify-center">
+          <div className="mx-auto w-16 h-16 rounded-2xl bg-primary flex items-center justify-center shadow-lg">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
@@ -67,16 +67,16 @@ export default function LoginPage() {
             AI Boilerplate
           </h1>
           <p className="text-muted-foreground">
-            Plataforma SaaS de Inteligencia Artificial
+            Sovereign AI SaaS Platform
           </p>
         </div>
 
         {/* Login Card */}
         <Card>
           <CardHeader>
-            <CardTitle>Iniciar Sesión</CardTitle>
+            <CardTitle>Sign In</CardTitle>
             <CardDescription>
-              Introduce tus credenciales para acceder al panel
+              Enter your credentials to access the dashboard
             </CardDescription>
           </CardHeader>
           <form onSubmit={handleSubmit}>
@@ -86,7 +86,7 @@ export default function LoginPage() {
                 <Input
                   id="login-email"
                   type="email"
-                  placeholder="tu@email.com"
+                  placeholder="you@email.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -94,7 +94,7 @@ export default function LoginPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="login-password">Contraseña</Label>
+                <Label htmlFor="login-password">Password</Label>
                 <Input
                   id="login-password"
                   type="password"
@@ -131,19 +131,19 @@ export default function LoginPage() {
                         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
                       />
                     </svg>
-                    Entrando...
+                    Signing in...
                   </span>
                 ) : (
-                  "Entrar"
+                  "Sign In"
                 )}
               </Button>
               <p className="text-sm text-muted-foreground text-center">
-                ¿No tienes cuenta?{" "}
+                Don't have an account?{" "}
                 <Link
                   to="/register"
                   className="text-primary underline-offset-4 hover:underline font-medium"
                 >
-                  Regístrate
+                  Sign Up
                 </Link>
               </p>
             </CardFooter>

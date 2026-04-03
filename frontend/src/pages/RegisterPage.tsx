@@ -33,12 +33,12 @@ export default function RegisterPage() {
     e.preventDefault();
 
     if (password !== confirmPassword) {
-      toast.error("Las contraseñas no coinciden");
+      toast.error("Passwords do not match");
       return;
     }
 
     if (password.length < 8) {
-      toast.error("La contraseña debe tener al menos 8 caracteres");
+      toast.error("Password must be at least 8 characters");
       return;
     }
 
@@ -46,11 +46,11 @@ export default function RegisterPage() {
 
     try {
       await authApi.register(email, password, firstName, lastName);
-      toast.success("Cuenta creada exitosamente. ¡Inicia sesión!");
+      toast.success("Account created successfully. Please sign in!");
       navigate("/login");
     } catch (err: unknown) {
       const error = err as { response?: { data?: { detail?: string } } };
-      toast.error(error.response?.data?.detail || "Error al registrar");
+      toast.error(error.response?.data?.detail || "Registration failed");
     } finally {
       setLoading(false);
     }
@@ -61,7 +61,7 @@ export default function RegisterPage() {
       <div className="w-full max-w-md space-y-8">
         {/* Header */}
         <div className="text-center space-y-2">
-          <div className="mx-auto w-16 h-16 rounded-2xl bg-primary flex items-center justify-center">
+          <div className="mx-auto w-16 h-16 rounded-2xl bg-primary flex items-center justify-center shadow-lg">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
@@ -78,41 +78,41 @@ export default function RegisterPage() {
             </svg>
           </div>
           <h1 className="text-3xl font-heading font-bold tracking-tight">
-            Crear Cuenta
+            Create Account
           </h1>
           <p className="text-muted-foreground">
-            Únete a la plataforma AI Boilerplate
+            Join the AI Boilerplate platform
           </p>
         </div>
 
         {/* Register Card */}
         <Card>
           <CardHeader>
-            <CardTitle>Registro</CardTitle>
+            <CardTitle>Sign Up</CardTitle>
             <CardDescription>
-              Completa el formulario para crear tu cuenta
+              Fill in the form to create your account
             </CardDescription>
           </CardHeader>
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="register-firstname">Nombre</Label>
+                  <Label htmlFor="register-firstname">First Name</Label>
                   <Input
                     id="register-firstname"
                     type="text"
-                    placeholder="Juan"
+                    placeholder="John"
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
                     autoComplete="given-name"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="register-lastname">Apellido</Label>
+                  <Label htmlFor="register-lastname">Last Name</Label>
                   <Input
                     id="register-lastname"
                     type="text"
-                    placeholder="García"
+                    placeholder="Doe"
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
                     autoComplete="family-name"
@@ -124,7 +124,7 @@ export default function RegisterPage() {
                 <Input
                   id="register-email"
                   type="email"
-                  placeholder="tu@email.com"
+                  placeholder="you@email.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -132,11 +132,11 @@ export default function RegisterPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="register-password">Contraseña</Label>
+                <Label htmlFor="register-password">Password</Label>
                 <Input
                   id="register-password"
                   type="password"
-                  placeholder="Mínimo 8 caracteres"
+                  placeholder="Minimum 8 characters"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -144,11 +144,11 @@ export default function RegisterPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="register-confirm">Confirmar Contraseña</Label>
+                <Label htmlFor="register-confirm">Confirm Password</Label>
                 <Input
                   id="register-confirm"
                   type="password"
-                  placeholder="Repite tu contraseña"
+                  placeholder="Repeat your password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
@@ -181,19 +181,19 @@ export default function RegisterPage() {
                         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
                       />
                     </svg>
-                    Creando cuenta...
+                    Creating account...
                   </span>
                 ) : (
-                  "Crear Cuenta"
+                  "Create Account"
                 )}
               </Button>
               <p className="text-sm text-muted-foreground text-center">
-                ¿Ya tienes cuenta?{" "}
+                Already have an account?{" "}
                 <Link
                   to="/login"
                   className="text-primary underline-offset-4 hover:underline font-medium"
                 >
-                  Inicia sesión
+                  Sign In
                 </Link>
               </p>
             </CardFooter>

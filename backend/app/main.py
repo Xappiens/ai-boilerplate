@@ -4,12 +4,14 @@ FastAPI Application Entrypoint
 Assembles all routers, middleware, SQLAdmin, and CORS.
 """
 
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqladmin import Admin, ModelView
-from sqlalchemy.ext.asyncio import AsyncSession
+
+logger = logging.getLogger(__name__)
 
 from app.core.config import settings
 from app.core.database import engine, async_session_maker
@@ -28,11 +30,11 @@ from app.models.document import Document
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan — startup and shutdown hooks."""
-    print(f"🚀 {settings.APP_NAME} starting...")
-    print(f"🤖 Active LLM Provider: {settings.ACTIVE_LLM_PROVIDER}")
-    print(f"🗄️ Database: {settings.DATABASE_URL.split('@')[1] if '@' in settings.DATABASE_URL else 'configured'}")
+    logger.info("🚀 %s starting...", settings.APP_NAME)
+    logger.info("🤖 Active LLM Provider: %s", settings.ACTIVE_LLM_PROVIDER)
+    logger.info("🗄️  Database: %s", settings.DATABASE_URL.split("@")[1] if "@" in settings.DATABASE_URL else "configured")
     yield
-    print(f"👋 {settings.APP_NAME} shutting down...")
+    logger.info("👋 %s shutting down...", settings.APP_NAME)
     await engine.dispose()
 
 

@@ -5,6 +5,7 @@ FastAPI-Users integration with JWT auth.
 Exposes /api/auth/register and /api/auth/login.
 """
 
+import logging
 import uuid
 from typing import Optional
 
@@ -17,6 +18,8 @@ from app.core.config import settings
 from app.core.database import get_async_session
 from app.core.security import auth_backend
 from app.models.user import User, UserCreate, UserRead, UserUpdate
+
+logger = logging.getLogger(__name__)
 
 
 # ── User Database Adapter ──────────────────────────────────────
@@ -35,7 +38,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
     async def on_after_register(
         self, user: User, request: Optional[Request] = None
     ) -> None:
-        print(f"✅ User {user.email} registered successfully (id={user.id})")
+        logger.info("✅ User %s registered (id=%s)", user.email, user.id)
 
     async def on_after_login(
         self,
@@ -43,7 +46,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         request: Optional[Request] = None,
         response=None,
     ) -> None:
-        print(f"🔑 User {user.email} logged in")
+        logger.info("🔑 User %s logged in", user.email)
 
 
 async def get_user_manager(user_db=Depends(get_user_db)):

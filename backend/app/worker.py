@@ -5,6 +5,7 @@ Background task processor using ARQ (async Redis queue).
 Handles heavy AI operations without blocking the API server.
 """
 
+import logging
 import uuid
 from datetime import datetime, timezone
 
@@ -15,6 +16,8 @@ from app.ai.llm_router import generate_ai_response, generate_embedding
 from app.core.config import settings
 from app.core.database import async_session_maker
 from app.models.document import Document, DocumentStatus
+
+logger = logging.getLogger(__name__)
 
 
 def parse_redis_url(url: str) -> RedisSettings:
@@ -46,13 +49,13 @@ async def process_document_ia(ctx: dict, doc_id: str) -> dict:
     Returns:
         dict with processing status and model used.
     """
-    print(f"🤖 [Worker] Processing document {doc_id}...")
+    logger.info("🤖 [Worker] Processing document %s...", doc_id)
 
     async with async_session_maker() as session:
         # 1. Load document
         doc = await session.get(Document, uuid.UUID(doc_id))
         if not doc:
-            print(f"❌ [Worker] Document {doc_id} not found")
+            logger.warning("❌ [Worker] Document %s not found", doc_id)
             return {"status": "error", "message": "Document not found"}
 
         # 2. Update status to processing
@@ -77,7 +80,7 @@ async def process_document_ia(ctx: dict, doc_id: str) -> dict:
                 embedding = await generate_embedding(doc.content[:8000])
                 doc.embedding = embedding
             except Exception as embed_err:
-                print(f"⚠️ [Worker] Embedding generation skipped: {embed_err}")
+                logger.warning("⚠️ [Worker] Embedding generation skipped: %s", embed_err)
 
             # 5. Mark as completed
             doc.status = DocumentStatus.COMPLETED
@@ -85,7 +88,7 @@ async def process_document_ia(ctx: dict, doc_id: str) -> dict:
             session.add(doc)
             await session.commit()
 
-            print(f"✅ [Worker] Document {doc_id} processed successfully")
+            logger.info("✅ [Worker] Document %s processed successfully", doc_id)
             return {
                 "status": "completed",
                 "model": settings.ACTIVE_LLM_PROVIDER,
@@ -99,7 +102,7 @@ async def process_document_ia(ctx: dict, doc_id: str) -> dict:
             session.add(doc)
             await session.commit()
 
-            print(f"❌ [Worker] Document {doc_id} failed: {e}")
+            logger.error("❌ [Worker] Document %s failed: %s", doc_id, e)
             return {"status": "failed", "error": str(e)}
 
 

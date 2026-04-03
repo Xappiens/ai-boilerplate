@@ -20,11 +20,11 @@ import {
 import { authApi, documentsApi, type Document, type UserProfile } from "@/lib/api";
 
 const STATUS_MAP: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
-  pending: { label: "Pendiente", variant: "outline" },
-  queued: { label: "En cola", variant: "secondary" },
-  processing: { label: "Procesando", variant: "default" },
-  completed: { label: "Completado", variant: "default" },
-  failed: { label: "Fallido", variant: "destructive" },
+  pending: { label: "Pending", variant: "outline" },
+  queued: { label: "Queued", variant: "secondary" },
+  processing: { label: "Processing", variant: "default" },
+  completed: { label: "Completed", variant: "default" },
+  failed: { label: "Failed", variant: "destructive" },
 };
 
 export default function DashboardPage() {
@@ -57,7 +57,7 @@ export default function DashboardPage() {
 
   const handleCreateDocument = async () => {
     if (!newTitle.trim()) {
-      toast.error("El título es obligatorio");
+      toast.error("Title is required");
       return;
     }
     setCreating(true);
@@ -66,9 +66,9 @@ export default function DashboardPage() {
       setDocuments((prev) => [doc, ...prev]);
       setNewTitle("");
       setNewContent("");
-      toast.success("Documento creado");
+      toast.success("Document created");
     } catch {
-      toast.error("Error al crear documento");
+      toast.error("Failed to create document");
     } finally {
       setCreating(false);
     }
@@ -77,8 +77,7 @@ export default function DashboardPage() {
   const handleProcess = async (docId: string) => {
     try {
       const result = await documentsApi.process(docId);
-      toast.info(result.message);
-      // Update local state
+      toast.info(result.message || "Task queued. Processing in background...");
       setDocuments((prev) =>
         prev.map((d) =>
           d.id === docId ? { ...d, status: "queued" as const } : d
@@ -86,7 +85,7 @@ export default function DashboardPage() {
       );
     } catch (err: unknown) {
       const error = err as { response?: { data?: { detail?: string } } };
-      toast.error(error.response?.data?.detail || "Error al procesar");
+      toast.error(error.response?.data?.detail || "Failed to process");
     }
   };
 
@@ -94,16 +93,16 @@ export default function DashboardPage() {
     try {
       await documentsApi.delete(docId);
       setDocuments((prev) => prev.filter((d) => d.id !== docId));
-      toast.success("Documento eliminado");
+      toast.success("Document deleted");
     } catch {
-      toast.error("Error al eliminar");
+      toast.error("Failed to delete");
     }
   };
 
   const handleRefresh = async () => {
     setLoading(true);
     await loadData();
-    toast.info("Datos actualizados");
+    toast.info("Data refreshed");
   };
 
   if (loading) {
@@ -126,7 +125,7 @@ export default function DashboardPage() {
               d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
             />
           </svg>
-          <p className="text-muted-foreground">Cargando dashboard...</p>
+          <p className="text-muted-foreground">Loading dashboard...</p>
         </div>
       </div>
     );
@@ -169,7 +168,7 @@ export default function DashboardPage() {
                 size="sm"
                 onClick={() => authApi.logout()}
               >
-                Cerrar Sesión
+                Sign Out
               </Button>
             </div>
           </div>
@@ -184,30 +183,30 @@ export default function DashboardPage() {
             Dashboard
           </h2>
           <p className="text-muted-foreground mt-1">
-            Gestiona tus documentos y procéelos con IA
+            Manage your documents and process them with AI
           </p>
         </div>
 
         {/* Create Document */}
         <Card>
           <CardHeader>
-            <CardTitle>Nuevo Documento</CardTitle>
+            <CardTitle>New Document</CardTitle>
             <CardDescription>
-              Crea un documento para procesarlo con inteligencia artificial
+              Create a document and process it with artificial intelligence
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex flex-col sm:flex-row gap-4">
               <Input
                 id="new-doc-title"
-                placeholder="Título del documento"
+                placeholder="Document title"
                 value={newTitle}
                 onChange={(e) => setNewTitle(e.target.value)}
                 className="flex-1"
               />
               <Input
                 id="new-doc-content"
-                placeholder="Contenido (texto)"
+                placeholder="Content (text)"
                 value={newContent}
                 onChange={(e) => setNewContent(e.target.value)}
                 className="flex-[2]"
@@ -217,7 +216,7 @@ export default function DashboardPage() {
                 onClick={handleCreateDocument}
                 disabled={creating}
               >
-                {creating ? "Creando..." : "Crear"}
+                {creating ? "Creating..." : "Create"}
               </Button>
             </div>
           </CardContent>
@@ -227,7 +226,7 @@ export default function DashboardPage() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-xl font-heading font-semibold">
-              Mis Documentos ({documents.length})
+              My Documents ({documents.length})
             </h3>
             <Button
               id="refresh-btn"
@@ -235,7 +234,7 @@ export default function DashboardPage() {
               size="sm"
               onClick={handleRefresh}
             >
-              ↻ Actualizar
+              ↻ Refresh
             </Button>
           </div>
 
@@ -256,10 +255,10 @@ export default function DashboardPage() {
                   <line x1="9" y1="15" x2="15" y2="15" />
                 </svg>
                 <p className="text-muted-foreground text-lg">
-                  No hay documentos aún
+                  No documents yet
                 </p>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Crea tu primer documento para comenzar
+                  Create your first document to get started
                 </p>
               </CardContent>
             </Card>
@@ -278,18 +277,18 @@ export default function DashboardPage() {
                           </Badge>
                         </div>
                         <p className="text-sm text-muted-foreground line-clamp-1">
-                          {doc.content || "Sin contenido"}
+                          {doc.content || "No content"}
                         </p>
                         {doc.ai_summary && (
                           <div className="mt-2 p-3 bg-muted rounded-lg">
                             <p className="text-xs font-medium text-muted-foreground mb-1">
-                              Resumen IA ({doc.ai_model_used}):
+                              AI Summary ({doc.ai_model_used}):
                             </p>
                             <p className="text-sm">{doc.ai_summary}</p>
                           </div>
                         )}
                         <p className="text-xs text-muted-foreground mt-2">
-                          Creado: {new Date(doc.created_at).toLocaleString("es-ES")}
+                          Created: {new Date(doc.created_at).toLocaleString()}
                         </p>
                       </div>
                       <div className="flex gap-2 shrink-0">
@@ -302,10 +301,10 @@ export default function DashboardPage() {
                           }
                         >
                           {doc.status === "processing"
-                            ? "Procesando..."
+                            ? "Processing..."
                             : doc.status === "queued"
-                            ? "En cola..."
-                            : "Procesar con IA"}
+                            ? "Queued..."
+                            : "Process with AI"}
                         </Button>
                         <Button
                           id={`delete-${doc.id}`}
@@ -313,7 +312,7 @@ export default function DashboardPage() {
                           variant="destructive"
                           onClick={() => handleDelete(doc.id)}
                         >
-                          Eliminar
+                          Delete
                         </Button>
                       </div>
                     </CardContent>

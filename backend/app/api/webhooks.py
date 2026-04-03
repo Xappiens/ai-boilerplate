@@ -6,18 +6,19 @@ Receives async callbacks from external AI agents (e.g., Manus).
 
 import hashlib
 import hmac
+import logging
 import uuid
 from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import APIRouter, Header, HTTPException, Request, status
 from pydantic import BaseModel
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlmodel import select
 
 from app.core.config import settings
 from app.core.database import async_session_maker
 from app.models.document import Document, DocumentStatus
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/webhooks", tags=["Webhooks"])
 
@@ -101,5 +102,5 @@ async def manus_webhook(
         session.add(doc)
         await session.commit()
 
-    print(f"📨 [Webhook] Manus result for doc {payload.document_id}: {payload.status}")
+    logger.info("📨 [Webhook] Manus result for doc %s: %s", payload.document_id, payload.status)
     return {"received": True, "document_id": payload.document_id}

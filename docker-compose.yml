@@ -1,0 +1,145 @@
+# ============================================================
+# AI BOILERPLATE - Docker Compose Orchestration
+# ============================================================
+# Usage:
+#   docker compose up -d --build
+# ============================================================
+
+services:
+  # 🐘 PostgreSQL + pgvector
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: ai_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-secret_postgres_pass}
+      POSTGRES_DB: ia_database
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - ia_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d ia_database"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # 🔴 Redis - Message Broker & Cache
+  redis:
+    image: redis:7-alpine
+    container_name: ai_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - ia_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # 🦙 Ollama - Local AI Engine
+  ia_local:
+    image: ollama/ollama
+    container_name: ai_ollama
+    restart: unless-stopped
+    volumes:
+      - ollama_data:/root/.ollama
+    ports:
+      - "11434:11434"
+    networks:
+      - ia_network
+    # GPU support - gracefully ignored if no NVIDIA GPU available
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  # 🐍 FastAPI - Backend API Server
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ai_api
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=${DATABASE_URL:-postgresql+asyncpg://admin:secret_postgres_pass@db:5432/ia_database}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - ia_network
+    command: >
+      bash -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+
+  # ⚙️ ARQ Worker - Background Task Processor
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ai_worker
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=${DATABASE_URL:-postgresql+asyncpg://admin:secret_postgres_pass@db:5432/ia_database}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+    volumes:
+      - ./backend:/app
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - ia_network
+    command: arq app.worker.WorkerSettings
+
+  # ⚛️ Vite - Frontend Dev Server
+  web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: ai_web
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - api
+    networks:
+      - ia_network
+    command: npm run dev -- --host 0.0.0.0 --port 3000
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  ollama_data:
+    driver: local
+
+networks:
+  ia_network:
+    driver: bridge
+    name: ia_network
